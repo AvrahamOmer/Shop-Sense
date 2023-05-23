@@ -7,4 +7,9 @@ def print_path():
     """Function printing path."""
     print(os.getcwd())
 
+#create function to print the username
+def print_username():
+    print(os.getlogin())
+
+print_username()
 print_path()
