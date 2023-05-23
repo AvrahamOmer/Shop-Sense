@@ -1,3 +1,4 @@
 # Shop-Sense
 Making stores more efficient
-for testing
+for testing 
+Hi i am itamar
