@@ -16,9 +16,9 @@ if __name__=="__main__":
     input_paths = ["./dataset/videos/front_1.mp4","./dataset/videos/store_1.mp4"]
     output_dirs = ["./dataset/frames/front_frames","./dataset/frames/store_frames"]
 
-    for i, _ in enumerate(input_paths):
-        extract_images(input_paths[i], output_dirs[i])
-        print("Extracted frames from video: ",input_paths[i])
+    for i, input_path in enumerate(input_paths):
+        extract_images(input_path, output_dirs[i])
+        print("Extracted frames from video: ",input_path)
         print("Saved to directory: ",output_dirs[i])
         print(" ")
     
