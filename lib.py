@@ -5,6 +5,7 @@ import seaborn as sns
 import ffmpeg
 import numpy as np
 import os
+import cv2
 
 def show_video(video_path, video_width = "fill"):
   """
@@ -16,15 +17,30 @@ def show_video(video_path, video_width = "fill"):
   video_url = f"data:video/mp4;base64,{b64encode(video_file).decode()}"
   return HTML(f"""<video width={video_width} controls><source src="{video_url}"></video>""")
 
-def create_video(frames_patten='Track/%03d.png', video_file = 'movie.mp4', framerate=25):
+def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25, frame_size = (1280,720), codec = "mp4v"):
   """
-  frames_patten (str): The patten to use to find the frames. The default patten looks for frames in a folder called Track. The frames shoud be named 001.png, 002.png, ..., 999.png
-  video_file (str): The file the video will be saved in 
+  frames_dir (str): The folder that has the tracked frames
+  output_file (str): The file the video will be saved in 
   framerate (float): The framerate for the video
+  frame_size: The size of the frame (Width, Hight)
+  coded: The type of the video
   """
-  if os.path.exists(video_file):
-      os.remove(video_file)
-  ffmpeg.input(frames_patten, framerate=framerate).output(video_file).run() 
+  if os.path.exists(output_file):
+    os.remove(output_file)
+
+  frame_files = sorted(os.listdir(frames_dir))
+
+  # Create a VideoWriter object
+  output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*codec), framerate, frame_size)
+
+  # Iterate through the frames and write them to the video
+  for frame_file in frame_files:
+      frame_path = os.path.join(frames_dir, frame_file)
+      frame = cv2.imread(frame_path)
+      output_vid.write(frame)
+
+  # Release the VideoWriter object and close the video file
+  output_vid.release()
 
 class VisTrack:
     def __init__(self, unique_colors=400):

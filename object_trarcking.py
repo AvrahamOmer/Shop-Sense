@@ -22,18 +22,10 @@ obj = centernet.ObjectDetection(num_classes=80)
 # num_classes=80 and weights_path=None: Pre-trained COCO model will be loaded.
 obj.load_weights(weights_path=None)
 
-# p_img = PIL.Image.open('./dataset/frames/front_frames/frame100.jpg')
-# img = cv2.cvtColor(np.array(p_img), cv2.COLOR_BGR2RGB)
-
-# boxes, classes, scores = obj.predict(img)
-
-# im = vt.draw_bounding_boxes(p_img, boxes, classes, scores)
-# im.show()
-
-
 vidcap = cv2.VideoCapture(video_file)
 fps = vidcap.get(cv2.CAP_PROP_FPS)
-length = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+duration = 15 # time in seconds
+pbar = tqdm(total = int(fps * duration/2)) 
 
 folder_out = "Track"
 if os.path.exists(folder_out):
@@ -44,12 +36,13 @@ draw_imgs = []
 
 sort = Sort(max_age=1, min_hits=3, iou_threshold=0.3)
 
-pbar = tqdm(total=length)
-i = 0
-while True:
+for i in range(int(fps * duration)):
     ret, frame = vidcap.read()
     if not ret:
         break
+    # Takeing even frames
+    if i%2 == 1:
+       continue
 
     boxes, classes, scores = obj.predict(frame)
     detections_in_frame = len(boxes)
@@ -73,9 +66,8 @@ while True:
         p_frame = vt.draw_bounding_boxes(p_frame, boxes_track, boces_ids, scores)
     p_frame.save(os.path.join(folder_out, f"{i:03d}.png"))
 
-    i+=1
     pbar.update(1)
      
 
-track_video_file = 'tracking.mp4'
-create_video(frames_patten='Track/%03d.png', video_file = track_video_file, framerate=fps)
+#Create a video
+create_video(framerate = fps/2)
