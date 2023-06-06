@@ -1,3 +1,11 @@
 my_env
 
 dataset
+
+Track
+
+tracked_videos
+
+__pycache__
+
+.DS_Store
