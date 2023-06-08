@@ -7,6 +7,25 @@ import numpy as np
 import os
 import cv2
 
+def match_ID(overlapping,detections):
+    """
+    overlapping (np.array): the array of 4 cordination of the overlapping [x1,y1,x2,y2]
+    detections (np.array): arraies with 5 col the first 4 is bounding box and the last is the id
+    return (int): the id of the detected object with the most closet set of cordinations to the overlapping area
+    """
+    min_distance = np.inf
+    overlapping_center = np.array([overlapping[0]+overlapping[2]/2,overlapping[1]+overlapping[3]/2])
+    closest_id = None
+
+    for detection in detections:
+        id = detection[4]
+        detection_center = np.array([detection[0]+detection[2]/2,detection[1]+detection[3]/2])
+        distance = np.sqrt((detection_center[0] - overlapping_center[0])**2 + (detection_center[1] - overlapping_center[1])**2)
+        if distance < min_distance:
+            min_distance = distance
+            closest_id = id
+    return closest_id
+
 def show_video(video_path, video_width = "fill"):
   """
   video_path (str): The path to the video
