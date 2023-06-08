@@ -39,8 +39,7 @@ def show_video(video_path, video_width = "fill"):
         file.write(html_content)
 
   print("index.html file created.")
-
-def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25, frame_size = (1280,720)):
+def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25, frame_size = (1280,720), codec = "mp4v"):
   """
   frames_dir (str): The folder that has the tracked frames
   output_file (str): The file the video will be saved in 
@@ -54,7 +53,7 @@ def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25
   frame_files = sorted(os.listdir(frames_dir))
 
   # Create a VideoWriter object
-  output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*'mp4v'), framerate, frame_size)
+  output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*codec), framerate, frame_size)
 
   # Iterate through the frames and write them to the video
   for frame_file in frame_files:
@@ -64,6 +63,7 @@ def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25
 
   # Release the VideoWriter object and close the video file
   output_vid.release()
+
 
   
 

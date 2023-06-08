@@ -25,12 +25,12 @@ obj = centernet.ObjectDetection(num_classes=80)
 obj.load_weights(weights_path=None)
 
 
-folder_out1 = "Track/front"
+folder_out1 = "Track/Track-front"
 if os.path.exists(folder_out1):
     shutil.rmtree(folder_out1)
 os.makedirs(folder_out1)
 
-folder_out2 = "Track/store"
+folder_out2 = "Track/Track-store"
 if os.path.exists(folder_out2):
     shutil.rmtree(folder_out2)
 os.makedirs(folder_out2)
@@ -76,7 +76,7 @@ for video in video_files:
                         match = match_ID(overlapping,dic_front[i])
                         if match == 0: print (f'ERROR accur in frame {i}')
                         mapping_ids[id] = match
-                    res[j,-1] = mapping_ids[id] + 1
+                    res[j,-1] = mapping_ids[id]
 
         boxes_track = res[:,:-1]
         boces_ids = res[:,-1].astype(int)
