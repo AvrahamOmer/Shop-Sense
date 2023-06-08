@@ -61,13 +61,10 @@ for video in video_files:
             classes = classes[idxs]
         else:
             boxes = np.empty((0, 5))
-        print(f"detection boxes in frame {i}: {boxes}")
         
 
         dets = np.hstack((boxes, scores[:,np.newaxis]))
-        print(f"dets in frame {i}: {dets}")
         res = sort.update(dets)
-        print(f"res in frame {i}: {res}")
 
         if video == video_file1:
             dic_front[i] = res
@@ -77,6 +74,7 @@ for video in video_files:
                     id = int(res[j,-1])
                     if id  not in mapping_ids:
                         match = match_ID(overlapping,dic_front[i])
+                        if match == 0: print (f'ERROR accur in frame {i}')
                         mapping_ids[id] = match
                     res[j,-1] = mapping_ids[id] + 1
 
@@ -92,6 +90,6 @@ for video in video_files:
         
 
 #Create a video
-create_video(frames_dir=folder_out1,output_file= "dataset/Track-front.mp4",framerate = fps/2)
-create_video(frames_dir=folder_out2,output_file= "dataset/Track-front.mp4",framerate = fps/2)
+create_video(frames_dir=folder_out1,output_file= "dataset/Track-front.mp4",framerate = fps//2)
+create_video(frames_dir=folder_out2,output_file= "dataset/Track-store.mp4",framerate = fps//2)
 

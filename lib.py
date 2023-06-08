@@ -15,7 +15,7 @@ def match_ID(overlapping,detections):
     """
     min_distance = np.inf
     overlapping_center = np.array([overlapping[0]+overlapping[2]/2,overlapping[1]+overlapping[3]/2])
-    closest_id = None
+    closest_id = 0
 
     for detection in detections:
         id = detection[4]
@@ -34,9 +34,13 @@ def show_video(video_path, video_width = "fill"):
   video_file = open(video_path, "r+b").read()
 
   video_url = f"data:video/mp4;base64,{b64encode(video_file).decode()}"
-  return HTML(f"""<video width={video_width} controls><source src="{video_url}"></video>""")
+  html_content = f"""<video width={video_width} controls><source src="{video_url}"></video>"""
+  with open("index.html", "w") as file:
+        file.write(html_content)
 
-def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25, frame_size = (1280,720), codec = "mp4v"):
+  print("index.html file created.")
+
+def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25, frame_size = (1280,720)):
   """
   frames_dir (str): The folder that has the tracked frames
   output_file (str): The file the video will be saved in 
@@ -50,7 +54,7 @@ def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25
   frame_files = sorted(os.listdir(frames_dir))
 
   # Create a VideoWriter object
-  output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*codec), framerate, frame_size)
+  output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*'mp4v'), framerate, frame_size)
 
   # Iterate through the frames and write them to the video
   for frame_file in frame_files:
@@ -60,6 +64,8 @@ def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25
 
   # Release the VideoWriter object and close the video file
   output_vid.release()
+
+  
 
 class VisTrack:
     def __init__(self, unique_colors=400):
