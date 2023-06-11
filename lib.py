@@ -7,6 +7,25 @@ import numpy as np
 import os
 import cv2
 
+def match_ID(overlapping,detections):
+    """
+    overlapping (np.array): the array of 4 cordination of the overlapping [x1,y1,x2,y2]
+    detections (np.array): arraies with 5 col the first 4 is bounding box and the last is the id
+    return (int): the id of the detected object with the most closet set of cordinations to the overlapping area
+    """
+    min_distance = np.inf
+    overlapping_center = np.array([overlapping[0]+overlapping[2]/2,overlapping[1]+overlapping[3]/2])
+    closest_id = 0
+
+    for detection in detections:
+        id = detection[4]
+        detection_center = np.array([detection[0]+detection[2]/2,detection[1]+detection[3]/2])
+        distance = np.sqrt((detection_center[0] - overlapping_center[0])**2 + (detection_center[1] - overlapping_center[1])**2)
+        if distance < min_distance:
+            min_distance = distance
+            closest_id = id
+    return closest_id
+
 def show_video(video_path, video_width = "fill"):
   """
   video_path (str): The path to the video
@@ -15,8 +34,11 @@ def show_video(video_path, video_width = "fill"):
   video_file = open(video_path, "r+b").read()
 
   video_url = f"data:video/mp4;base64,{b64encode(video_file).decode()}"
-  return HTML(f"""<video width={video_width} controls><source src="{video_url}"></video>""")
+  html_content = f"""<video width={video_width} controls><source src="{video_url}"></video>"""
+  with open("index.html", "w") as file:
+        file.write(html_content)
 
+  print("index.html file created.")
 def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25, frame_size = (1280,720), codec = "mp4v"):
   """
   frames_dir (str): The folder that has the tracked frames
@@ -41,6 +63,9 @@ def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25
 
   # Release the VideoWriter object and close the video file
   output_vid.release()
+
+
+  
 
 class VisTrack:
     def __init__(self, unique_colors=400):
