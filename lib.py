@@ -7,6 +7,11 @@ import numpy as np
 import os
 import cv2
 
+def add_fifth_axis(array, default_value = 100):
+    fifth_axis = np.full((array.shape[0], 1), default_value)
+    result = np.hstack((array, fifth_axis))
+    return result
+
 def match_ID(overlapping,detections):
     """
     overlapping (np.array): the array of 4 cordination of the overlapping [x1,y1,x2,y2]
@@ -18,7 +23,7 @@ def match_ID(overlapping,detections):
     closest_id = 0
 
     for detection in detections:
-        id = detection[4]
+        id = detection[-1]
         detection_center = np.array([detection[0]+detection[2]/2,detection[1]+detection[3]/2])
         distance = np.sqrt((detection_center[0] - overlapping_center[0])**2 + (detection_center[1] - overlapping_center[1])**2)
         if distance < min_distance:

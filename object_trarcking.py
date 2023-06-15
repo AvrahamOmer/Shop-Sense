@@ -1,8 +1,10 @@
 import os
 import centernet
+import time
+
 
 from sort import Sort
-from lib import VisTrack, create_video, match_ID
+from lib import VisTrack, create_video, match_ID, add_fifth_axis
 
 import numpy as np
 import PIL.Image
@@ -17,6 +19,11 @@ overlapping = np.array([375,360,500,700])
 vt = VisTrack()
 dic_front = {}
 mapping_ids = {}
+max_age, min_hits, iou_threshold = 1, 1, 0.3
+sort = Sort(max_age, min_hits, iou_threshold)
+duration = 15 # time in seconds
+skip_detect = 5 # skip detection every 10 frames
+id_object = 1 
 
 # Default: num_classes=80
 obj = centernet.ObjectDetection(num_classes=80)
@@ -35,48 +42,65 @@ if os.path.exists(folder_out2):
     shutil.rmtree(folder_out2)
 os.makedirs(folder_out2)
 
+
 for video in video_files:
     vidcap = cv2.VideoCapture(video)
     fps = vidcap.get(cv2.CAP_PROP_FPS)
-    duration = 15 # time in seconds
-    pbar = tqdm(total = int(fps * duration/2))
-    sort = Sort(max_age=1, min_hits=3, iou_threshold=0.3)
+    est_tot_frames = int(duration * fps)  # Sets an upper bound # of frames in video clip
+    n = 2                             # Desired interval of frames to include
+    frame_count = 0
+
+    pbar = tqdm(total = int(est_tot_frames // n))
     out_put_file = folder_out1 if video == video_file1 else folder_out2
-
-    for i in range(int(fps * duration)):
-        ret, frame = vidcap.read()
-        if not ret:
+    start_time = time.time()  # Record the start time
+    for i in range(0,est_tot_frames,n):
+        vidcap.set(cv2.CAP_PROP_POS_FRAMES, i)
+        sucsses, frame = vidcap.read()
+        if not sucsses:
             break
-        # Takeing even frames
-        if i%2 == 1:
-            continue
 
-        boxes, classes, scores = obj.predict(frame)
-        detections_in_frame = len(boxes)
-        if detections_in_frame:
-            # centernet will do detection on all the COCO classes. "person" is class number 0 
-            idxs = np.where(classes == 0)[0]
-            boxes = boxes[idxs]
-            scores = scores[idxs]
-            classes = classes[idxs]
+        # do detection every 10 frames
+        if (frame_count % skip_detect <= min_hits):
+            boxes, classes, scores = obj.predict(frame)
+            detections_in_frame = len(boxes)
+            if detections_in_frame:
+                # centernet will do detection on all the COCO classes. "person" is class number 0 
+                idxs = np.where(classes == 0)[0]
+                boxes = boxes[idxs]
+                scores = scores[idxs]
+            else:
+                boxes = np.empty((0, 4))
         else:
-            boxes = np.empty((0, 5))
-        
-
-        dets = np.hstack((boxes, scores[:,np.newaxis]))
+            if len(res):
+                boxes = res[:,:-1]
+            else:
+                boxes = np.empty((0, 4))
+                
+        dets = add_fifth_axis(boxes)
         res = sort.update(dets)
 
+        print ("------------------")
+        print(f'boxes in frame {i}: {boxes}')
+        print(f'dets in frame {i}: {dets}')
+        print (f'res in frame {i}: {res}')
+
+        # mapping ids between front and store
         if video == video_file1:
+            for k in range(len(res)):
+                id = int(res[k,-1])
+                if id not in mapping_ids:
+                    mapping_ids[id] = id_object
+                    id_object += 1
+                res[k,-1] = mapping_ids[id]
             dic_front[i] = res
         else:
-            if len(res) != 0:
-                for j in range(len(res)):
-                    id = int(res[j,-1])
-                    if id  not in mapping_ids:
-                        match = match_ID(overlapping,dic_front[i])
-                        if match == 0: print (f'ERROR accur in frame {i}')
-                        mapping_ids[id] = match
-                    res[j,-1] = mapping_ids[id]
+            for j in range(len(res)):
+                id = int(res[j,-1])
+                if id  not in mapping_ids:
+                    match = match_ID(overlapping,dic_front[i])
+                    if match == 0: print (f'ERROR accur in frame {i}')
+                    mapping_ids[id] = match
+                res[j,-1] = mapping_ids[id]
 
         boxes_track = res[:,:-1]
         boces_ids = res[:,-1].astype(int)
@@ -87,9 +111,13 @@ for video in video_files:
         p_frame.save(os.path.join(out_put_file, f"{i:03d}.png"))
 
         pbar.update(1)
+        frame_count += 1
+    end_time = time.time()  # Record the end time
+    execution_time = end_time - start_time  # Calculate the execution time
+    print(f'Execution video {video} in {execution_time//60} mins')
+
         
 
 #Create a video
 create_video(frames_dir=folder_out1,output_file= "dataset/Track-front.mp4",framerate = fps//2)
 create_video(frames_dir=folder_out2,output_file= "dataset/Track-store.mp4",framerate = fps//2)
-
