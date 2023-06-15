@@ -1,5 +1,8 @@
 """extract images from videos"""
 import cv2
+import os
+import shutil
+
 
 def extract_images(path_in, path_out):
     """function to extract images from videos"""
@@ -13,7 +16,18 @@ def extract_images(path_in, path_out):
         count = count + 1
 
 if __name__=="__main__":
-    input_paths = ["./dataset/videos/front_1.mp4","./dataset/videos/store_1.mp4"]
+
+    folder_out1 = "./dataset/frames/front_frames"
+    if os.path.exists(folder_out1):
+        shutil.rmtree(folder_out1)
+    os.makedirs(folder_out1)
+
+    folder_out2 = "./dataset/frames/store_frames"
+    if os.path.exists(folder_out2):
+        shutil.rmtree(folder_out2)
+    os.makedirs(folder_out2)
+
+    input_paths = ["./dataset/videos/front_2.mp4","./dataset/videos/store_2.mp4"]
     output_dirs = ["./dataset/frames/front_frames","./dataset/frames/store_frames"]
 
     for i, input_path in enumerate(input_paths):

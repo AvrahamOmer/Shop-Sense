@@ -12,16 +12,16 @@ import cv2
 from tqdm.auto import tqdm
 import shutil
 
-video_file1 = "./dataset/videos/front_1.mp4"
-video_file2 = "./dataset/videos/store_1.mp4"
+video_file1 = "./dataset/videos/front_2.mp4"
+video_file2 = "./dataset/videos/store_2.mp4"
 video_files = [video_file1, video_file2]
-overlapping = np.array([375,360,500,700])
+overlapping = np.array([230,640,450,1080])
 vt = VisTrack()
 dic_front = {}
 mapping_ids = {}
 max_age, min_hits, iou_threshold = 1, 1, 0.3
 sort = Sort(max_age, min_hits, iou_threshold)
-duration = 15 # time in seconds
+duration = 26 # time in seconds
 skip_detect = 5 # skip detection every 10 frames
 id_object = 1 
 
@@ -119,5 +119,5 @@ for video in video_files:
         
 
 #Create a video
-create_video(frames_dir=folder_out1,output_file= "dataset/Track-front.mp4",framerate = fps//2)
-create_video(frames_dir=folder_out2,output_file= "dataset/Track-store.mp4",framerate = fps//2)
+create_video(frames_dir=folder_out1,output_file= "dataset/Track-front.mp4",frame_size= (608,1080),framerate = fps//2)
+create_video(frames_dir=folder_out2,output_file= "dataset/Track-store.mp4",frame_size= (608,1080),framerate = fps//2)
