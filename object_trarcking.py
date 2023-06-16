@@ -110,8 +110,8 @@ if __name__ == "__main__":
 
     # Create the argument
     parser = argparse.ArgumentParser(description='Generate ids for object tracking.')
-    parser.add_argument('-g', '--generate-frames', action='store_false', default=True, help='Generate frames.')
-    parser.add_argument('-c', '--create-videos', action='store_false', default=True, help='Create video.')
+    parser.add_argument('-g', '--generate-frames', action='store_true', default=False, help='Generate frames.')
+    parser.add_argument('-c', '--create-videos', action='store_true', default=False, help='Create video.')
     args = parser.parse_args()
     generate_frames = args.generate_frames
     create_videos = args.create_videos
