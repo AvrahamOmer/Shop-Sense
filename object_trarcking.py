@@ -20,14 +20,13 @@ def generate_tracked_frames(video_files,folder_outs, duration, desired_interval,
     vt = VisTrack()
     id_object = 1 
 
-
-
     # Default: num_classes=80
     obj = centernet.ObjectDetection(num_classes=80)
 
     # num_classes=80 and weights_path=None: Pre-trained COCO model will be loaded.
     obj.load_weights(weights_path=None)
 
+    #delete output folders
     for folder in folder_outs:
         if os.path.exists(folder):
             shutil.rmtree(folder)
@@ -36,7 +35,7 @@ def generate_tracked_frames(video_files,folder_outs, duration, desired_interval,
     for video in video_files:
         vidcap = cv2.VideoCapture(video)
         fps = vidcap.get(cv2.CAP_PROP_FPS)
-        est_tot_frames = int(duration * fps)  # Sets an upper bound # of frames in video clip
+        est_tot_frames = int(duration * fps)
         frame_count = 0
 
         pbar = tqdm(total = int(est_tot_frames // desired_interval))
@@ -48,7 +47,7 @@ def generate_tracked_frames(video_files,folder_outs, duration, desired_interval,
             if not sucsses:
                 break
 
-            # do detection every 10 frames
+            # get boxes from object detction
             if (frame_count % skip_detect <= min_hits):
                 boxes, classes, scores = obj.predict(frame)
                 detections_in_frame = len(boxes)
@@ -59,6 +58,7 @@ def generate_tracked_frames(video_files,folder_outs, duration, desired_interval,
                     scores = scores[idxs]
                 else:
                     boxes = np.empty((0, 4))
+            #get boxes from tracking
             else:
                 if len(res):
                     boxes = res[:,:-1]
@@ -67,11 +67,6 @@ def generate_tracked_frames(video_files,folder_outs, duration, desired_interval,
                     
             dets = add_fifth_axis(boxes)
             res = sort.update(dets)
-
-            print ("------------------")
-            print(f'boxes in frame {i}: {boxes}')
-            print(f'dets in frame {i}: {dets}')
-            print (f'res in frame {i}: {res}')
 
             # mapping ids between front and store
             if video == video_file1:
@@ -128,8 +123,8 @@ if __name__ == "__main__":
     overlapping = np.array([230,640,450,1080])
     max_age, min_hits, iou_threshold = 1, 1, 0.3
     duration = 26 # time in seconds
-    skip_detect = 5 # skip detection every 5 frames
-    desired_interval = 2 # proccess every 2 frames 
+    skip_detect = 5 # doing object detection every n frames
+    desired_interval = 2 # taking every n frames 
 
     if generate_frames: 
         generate_tracked_frames(video_files, folder_outs, duration, desired_interval, overlapping, skip_detect, max_age=1, min_hits=1, iou_threshold=0.3)
