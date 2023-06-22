@@ -131,7 +131,7 @@ class Camera:
         self.overlappingDic = overlappingDic
         self.resDic = {}
 
-    def update_res(self,duration,desired_interval,skip_detect,sort : Sort, obj : ObjectDetection):
+    def create_res(self,duration,desired_interval,skip_detect,sort : Sort, obj : ObjectDetection):
         vidcap = cv2.VideoCapture(self.vidoePath)
         fps = vidcap.get(cv2.CAP_PROP_FPS)
         est_tot_frames = int(duration * fps)
@@ -178,3 +178,22 @@ class Camera:
                 min_distance = distance
                 camera = key
         return camera
+    
+    def update_res(self, frame, overlapping, detections, mapping_ids):
+        '''
+        We want to update the res dic so we need the frame to update
+        we need the new id, the new id we get from the matchID function
+        the match id want to get the res and the overlapping from the suspect camera
+        '''
+        new_id = match_ID(overlapping,detections)
+        resArr = self.resDic[frame]
+        for j in range(len(resArr)):
+            id = int(resArr[j,-1])
+            if id  not in mapping_ids:
+                mapping_ids[id] = new_id
+            resArr[j,-1] = mapping_ids[id]
+        return mapping_ids
+
+
+
+

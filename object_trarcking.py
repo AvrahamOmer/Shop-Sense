@@ -130,9 +130,37 @@ if __name__ == "__main__":
     cameraS = Camera(name='store',vidoePath=video_file2, overlappingDic={'front': np.array([440,630,570,1080])})
     
     print (f'Start update res from {cameraF.name}')
-    cameraF.update_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
+    cameraF.create_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
     print (f'Start update res from {cameraS.name}')
-    cameraS.update_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
+    cameraS.create_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
+
+    # frame = 0
+    # mapping_ids = {}
+    # camerasDic = {
+    #     'front': cameraF,
+    #     'store': cameraS
+    # }
+
+    # # we need to go over each frame in parllel
+    # # see if we got id that not exist in mapping_ids
+    # # we need to take the frame
+    # # we need the name of the prev_camera
+    # # we need to go -> camerasDic[camerasDic] -> taking the overlapping from the overlappingdic[desire camera] and the res of the same frame
+    # for i in cameraF.resDic:
+    #     for spot,camera in camerasDic.items():
+    #         for resArr in camera.resDic[frame]
+
+
+
+
+
+
+
+
+
+
+
+
 
     # if generate_frames: 
     #     generate_tracked_frames(video_files, folder_outs, duration, desired_interval, overlapping, skip_detect, max_age=1, min_hits=1, iou_threshold=0.3)
