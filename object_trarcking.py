@@ -9,8 +9,7 @@ from tqdm.auto import tqdm
 import shutil
 
 from sort import Sort
-from lib import VisTrack, create_video, match_ID, add_fifth_axis
-
+from lib import VisTrack, create_video, match_ID, add_fifth_axis, Camera
 
 def generate_tracked_frames(video_files,folder_outs, duration, desired_interval, overlapping, skip_detect, max_age=1, min_hits=1, iou_threshold=0.3):
 
@@ -114,23 +113,32 @@ if __name__ == "__main__":
     print("create_video:", create_videos)
 
     # config variables
-    video_file1 = "./dataset/videos/front_2.mp4"
+    video_file_f = "./dataset/videos/front_2.mp4"
     video_file2 = "./dataset/videos/store_2.mp4"
     folder_out1 = "Track/Track-front"
     folder_out2 = "Track/Track-store"
     folder_outs = [folder_out1, folder_out2]
-    video_files = [video_file1, video_file2]
-    overlapping = np.array([230,640,450,1080])
     max_age, min_hits, iou_threshold = 1, 1, 0.3
-    duration = 26 # time in seconds
+    duration = 5 # time in seconds
     skip_detect = 5 # doing object detection every n frames
     desired_interval = 2 # taking every n frames 
+    sort = Sort(max_age, min_hits, iou_threshold)
+    obj = centernet.ObjectDetection(num_classes=80)
+    obj.load_weights(weights_path=None)
 
-    if generate_frames: 
-        generate_tracked_frames(video_files, folder_outs, duration, desired_interval, overlapping, skip_detect, max_age=1, min_hits=1, iou_threshold=0.3)
+    cameraF = Camera(name='front', vidoePath=video_file_f, overlappingDic={'store': np.array([230,640,450,1080])})
+    cameraS = Camera(name='store',vidoePath=video_file2, overlappingDic={'front': np.array([440,630,570,1080])})
+    
+    print (f'Start update res from {cameraF.name}')
+    cameraF.update_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
+    print (f'Start update res from {cameraS.name}')
+    cameraS.update_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
 
-    if create_videos:
-        vidcap = cv2.VideoCapture(video_file1)
-        fps = vidcap.get(cv2.CAP_PROP_FPS)
-        create_video(frames_dir=folder_out1,output_file= "dataset/Track-front.mp4",frame_size= (608,1080),framerate = fps//2)
-        create_video(frames_dir=folder_out2,output_file= "dataset/Track-store.mp4",frame_size= (608,1080),framerate = fps//2)
+    # if generate_frames: 
+    #     generate_tracked_frames(video_files, folder_outs, duration, desired_interval, overlapping, skip_detect, max_age=1, min_hits=1, iou_threshold=0.3)
+
+    # if create_videos:
+    #     vidcap = cv2.VideoCapture(video_file1)
+    #     fps = vidcap.get(cv2.CAP_PROP_FPS)
+    #     create_video(frames_dir=folder_out1,output_file= "dataset/Track-front.mp4",frame_size= (608,1080),framerate = fps//2)
+    #     create_video(frames_dir=folder_out2,output_file= "dataset/Track-store.mp4",frame_size= (608,1080),framerate = fps//2)

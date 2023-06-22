@@ -5,8 +5,8 @@ plt.title("Sheep Image")
 plt.xlabel("X pixel scaling")
 plt.ylabel("Y pixels scaling")
  
-image1 = mpimg.imread('./dataset/frames/front_frames/frame502.jpg')
-image2 = mpimg.imread('./dataset/frames/store_frames/frame502.jpg')
+image1 = mpimg.imread('./Track/Track-front/502.png')
+image2 = mpimg.imread('./Track/Track-store/502.png')
 fig, (ax1, ax2) = plt.subplots(1, 2)
 
 # Display image1 in the first subplot

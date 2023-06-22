@@ -2,10 +2,12 @@ from IPython.display import HTML, display
 import PIL.Image
 from base64 import b64encode
 import seaborn as sns
-import ffmpeg
 import numpy as np
 import os
 import cv2
+from tqdm.auto import tqdm
+from sort import Sort
+from centernet import ObjectDetection
 
 def add_fifth_axis(array, default_value = 100):
     fifth_axis = np.full((array.shape[0], 1), default_value)
@@ -122,3 +124,57 @@ class VisTrack:
             draw.text((bbox[0], bbox[1]), text, fill=(0, 0, 0))
 
         return im
+class Camera:
+    def __init__ (self, name, vidoePath, overlappingDic):
+        self.name = name
+        self.vidoePath = vidoePath
+        self.overlappingDic = overlappingDic
+        self.resDic = {}
+
+    def update_res(self,duration,desired_interval,skip_detect,sort : Sort, obj : ObjectDetection):
+        vidcap = cv2.VideoCapture(self.vidoePath)
+        fps = vidcap.get(cv2.CAP_PROP_FPS)
+        est_tot_frames = int(duration * fps)
+        frame_count = 0
+        for i in tqdm(range(0,est_tot_frames,desired_interval)):
+            vidcap.set(cv2.CAP_PROP_POS_FRAMES, i)
+            sucsses, frame = vidcap.read()
+            if not sucsses:
+                break
+
+            # get boxes from object detction
+            if (frame_count % skip_detect <= sort.min_hits):
+                boxes, classes, scores = obj.predict(frame)
+                detections_in_frame = len(boxes)
+                if detections_in_frame:
+                    # centernet will do detection on all the COCO classes. "person" is class number 0 
+                    idxs = np.where(classes == 0)[0]
+                    boxes = boxes[idxs]
+                    scores = scores[idxs]
+                else:
+                    boxes = np.empty((0, 4))
+            #get boxes from tracking
+            else:
+                if len(res):
+                    boxes = res[:,:-1]
+                else:
+                    boxes = np.empty((0, 4))
+                    
+            dets = add_fifth_axis(boxes)
+            res = sort.update(dets)
+            self.resDic[frame_count] = res
+
+            frame_count += 1
+    
+    def detect_prev_camera(self,res : np.ndarray):
+        min_distance = np.inf
+        camera = ""
+        res_center = np.array([res[0]+res[2]/2,res[1]+res[3]/2])
+
+        for key, value in self.overlappingDic.items():
+            value_center = np.array([value[0]+value[2]/2,value[1]+value[3]/2])
+            distance = np.sqrt((value_center[0] - res_center[0])**2 + (value_center[1] - res_center[1])**2)
+            if distance < min_distance:
+                min_distance = distance
+                camera = key
+        return camera
