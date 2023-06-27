@@ -7,9 +7,11 @@ import PIL.Image
 import cv2
 from tqdm.auto import tqdm
 import shutil
+import json
+
 
 from sort import Sort
-from lib import VisTrack, create_video, match_ID, add_fifth_axis, Camera
+from lib import VisTrack, create_video, match_ID, add_fifth_axis, Camera, CameraFront
 
 def generate_tracked_frames(video_files,folder_outs, duration, desired_interval, overlapping, skip_detect, max_age=1, min_hits=1, iou_threshold=0.3):
 
@@ -119,51 +121,58 @@ if __name__ == "__main__":
     folder_out2 = "Track/Track-store"
     folder_outs = [folder_out1, folder_out2]
     max_age, min_hits, iou_threshold = 1, 1, 0.3
-    duration = 5 # time in seconds
+    duration = 25 # time in seconds
     skip_detect = 5 # doing object detection every n frames
     desired_interval = 2 # taking every n frames 
     sort = Sort(max_age, min_hits, iou_threshold)
     obj = centernet.ObjectDetection(num_classes=80)
     obj.load_weights(weights_path=None)
 
-    cameraF = Camera(name='front', vidoePath=video_file_f, overlappingDic={'store': np.array([230,640,450,1080])})
-    cameraS = Camera(name='store',vidoePath=video_file2, overlappingDic={'front': np.array([440,630,570,1080])})
+    cameraF = CameraFront(name='front', vidoePath=video_file_f, overlappingDic={'store': np.array([230,640,450,1080]),
+                                                                           'door': np.array([440,630,510,990])})
     
-    print (f'Start update res from {cameraF.name}')
+    cameraS = Camera(name='store', vidoePath=video_file2, overlappingDic={'front': np.array([440,630,570,1080])})
+    
     cameraF.create_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
-    print (f'Start update res from {cameraS.name}')
     cameraS.create_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
 
-    # frame = 0
-    # mapping_ids = {}
-    # camerasDic = {
-    #     'front': cameraF,
-    #     'store': cameraS
-    # }
+    mapping_ids = {}
+    camerasDic = {
+        cameraF.name: cameraF,
+        cameraS.name: cameraS
+    }
 
-    # # we need to go over each frame in parllel
-    # # see if we got id that not exist in mapping_ids
-    # # we need to take the frame
-    # # we need the name of the prev_camera
-    # # we need to go -> camerasDic[camerasDic] -> taking the overlapping from the overlappingdic[desire camera] and the res of the same frame
-    # for i in cameraF.resDic:
-    #     for spot,camera in camerasDic.items():
-    #         for resArr in camera.resDic[frame]
+    # update the cameras detections
+    for frame in range(len(cameraF.resDic)): # run on range (0,number of frames)
+        for spot,camera in camerasDic.items():
+            mapping_ids = camera.update_frame(frame= frame, camerasDic= camerasDic, mapping_ids= mapping_ids)
 
+    # File path to save the dictionary
+    file1 = {'name':"front.json", 'data': cameraF.resDic}
+    file2 = {'name':"store.json", 'data': cameraS.resDic}
+    file3 = {'name':"map.json", 'data': mapping_ids}
+    filearr = [file1,file2,file3]
 
+    # Save dictionary to file
+    for dic in filearr:
+        if dic['name'] != "map.json":
+            for key,value in dic['data'].items():
+                dic['data'][key] = value.tolist()
+        with open(dic['name'], "w") as file:
+            json.dump(dic['data'], file)
 
+    # # draw the bounding boxes and save the frames
+    # for spot,camera in camerasDic.items():
+    #     for frame,res in camera.resDic.items():
 
+    #         boxes_track = res[:,:-1]
+    #         boces_ids = res[:,-1].astype(int)
 
+    #         p_frame = PIL.Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    #         if detections_in_frame:
+    #             p_frame = vt.draw_bounding_boxes(p_frame, boxes_track, boces_ids, scores)
+    #         p_frame.save(os.path.join(out_put_file, f"{i:03d}.png"))
 
-
-
-
-
-
-
-
-    # if generate_frames: 
-    #     generate_tracked_frames(video_files, folder_outs, duration, desired_interval, overlapping, skip_detect, max_age=1, min_hits=1, iou_threshold=0.3)
 
     # if create_videos:
     #     vidcap = cv2.VideoCapture(video_file1)

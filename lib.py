@@ -103,8 +103,7 @@ class VisTrack:
         ic = self._id_dict[i]
         return self._get_color(ic)
 
-    def draw_bounding_boxes(self, im: PIL.Image, bboxes: np.ndarray, ids: np.ndarray,
-                        scores: np.ndarray) -> PIL.Image:
+    def draw_bounding_boxes(self, im: PIL.Image, bboxes: np.ndarray, ids: np.ndarray) -> PIL.Image:
         """
         im (PIL.Image): The image 
         bboxes (np.ndarray): The bounding boxes. [[x1,y1,x2,y2],...]
@@ -114,14 +113,18 @@ class VisTrack:
         im = im.copy()
         draw = PIL.ImageDraw.Draw(im)
 
-        for bbox, id_, score in zip(bboxes, ids, scores):
+        for bbox, id_ in zip(bboxes, ids):
             color = self._color(id_)
             draw.rectangle((*bbox.astype(np.int64),), outline=color)
 
-            text = f'{id_}: {int(100 * score)}%'
+            text = f'{id_}'
             text_w, text_h = draw.textsize(text)
+
+            #increase text size
+            font_size = 18
+
             draw.rectangle((bbox[0], bbox[1], bbox[0] + text_w, bbox[1] + text_h), fill=color, outline=color)
-            draw.text((bbox[0], bbox[1]), text, fill=(0, 0, 0))
+            draw.text((bbox[0], bbox[1]), text, fill=(0, 0, 0), size=font_size)
 
         return im
 class Camera:
@@ -167,6 +170,9 @@ class Camera:
             frame_count += 1
     
     def detect_prev_camera(self,res : np.ndarray):
+        '''
+        get the res of the bunding boxes and return the name of the camera that the object came from
+        '''
         min_distance = np.inf
         camera = ""
         res_center = np.array([res[0]+res[2]/2,res[1]+res[3]/2])
@@ -179,19 +185,51 @@ class Camera:
                 camera = key
         return camera
     
-    def update_res(self, frame, overlapping, detections, mapping_ids):
+    def update_frame(self, frame, camerasDic, mapping_ids):
         '''
-        We want to update the res dic so we need the frame to update
-        we need the new id, the new id we get from the matchID function
-        the match id want to get the res and the overlapping from the suspect camera
+        update res[-1] to the correct id from mappings ID
+        we will on each frame on it's res, from each res we will check if the id is already in mapping_ids
+        if not, we will use detecet_prev_camera to identify from which camera did the obejct came. 
+        then we will use macth_ID to get the id from the previous camera.
+        we will update the id in mappings_ids and return the mappings_ids dic.
         '''
-        new_id = match_ID(overlapping,detections)
-        resArr = self.resDic[frame]
-        for j in range(len(resArr)):
-            id = int(resArr[j,-1])
-            if id  not in mapping_ids:
-                mapping_ids[id] = new_id
-            resArr[j,-1] = mapping_ids[id]
+        for index, res in enumerate(self.resDic[frame]):
+                id = int(res[-1])
+                if id not in mapping_ids:
+                    prev_camera = self.detect_prev_camera(res)
+                    overlapping = camerasDic[prev_camera].overlappingDic[self.name]
+                    detections = camerasDic[prev_camera].resDic[frame]
+                    new_id = match_ID(overlapping,detections)
+                    mapping_ids[id] = new_id
+                self.resDic[frame][index,-1] = mapping_ids[id]
+        return mapping_ids
+    
+class CameraFront(Camera):
+    def __init__(self, name, vidoePath, overlappingDic):
+        super().__init__(name, vidoePath, overlappingDic)
+        self.counterID = 0
+
+    def update_frame(self, frame, camerasDic, mapping_ids):
+        '''
+        update res[-1] to the correct id from mappings ID
+        we will on each frame on it's res, from each res we will check if the id is already in mapping_ids
+        if not, we will use detecet_prev_camera to identify from which camera did the obejct came. 
+        then we will use macth_ID to get the id from the previous camera.
+        we will update the id in mappings_ids and return the mappings_ids dic.
+        '''
+        for index, res in enumerate(self.resDic[frame]):
+                id = int(res[-1])
+                if id not in mapping_ids:
+                    prev_camera = self.detect_prev_camera(res)
+                    if prev_camera == 'door':
+                        new_id = self.counterID
+                        self.counterID += 1
+                    else:
+                        overlapping = camerasDic[prev_camera].overlappingDic[self.name]
+                        detections = camerasDic[prev_camera].resDic[frame]
+                        new_id = match_ID(overlapping,detections)
+                    mapping_ids[id] = new_id
+                self.resDic[frame][index,-1] = mapping_ids[id]
         return mapping_ids
 
 
