@@ -207,7 +207,7 @@ class Camera:
 class CameraFront(Camera):
     def __init__(self, name, vidoePath, overlappingDic):
         super().__init__(name, vidoePath, overlappingDic)
-        self.counterID = 0
+        self.counterID = 1
 
     def update_frame(self, frame, camerasDic, mapping_ids):
         '''

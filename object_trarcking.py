@@ -145,7 +145,8 @@ if __name__ == "__main__":
     # update the cameras detections
     for frame in range(len(cameraF.resDic)): # run on range (0,number of frames)
         for spot,camera in camerasDic.items():
-            mapping_ids = camera.update_frame(frame= frame, camerasDic= camerasDic, mapping_ids= mapping_ids)
+            if frame in camera.resDic:
+                mapping_ids = camera.update_frame(frame= frame, camerasDic= camerasDic, mapping_ids= mapping_ids)
 
     # File path to save the dictionary
     file1 = {'name':"front.json", 'data': cameraF.resDic}
