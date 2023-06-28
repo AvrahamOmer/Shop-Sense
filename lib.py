@@ -175,7 +175,7 @@ class Camera:
         fps = vidcap.get(cv2.CAP_PROP_FPS)
         est_tot_frames = int(duration * fps)
         frame_count = 0
-        print(f'starting draw bounding boxes on {self.name} save it to {folder_out}')
+        print(f'drawing bounding boxes on {self.name} save it to {folder_out}')
         for i in tqdm(range(0,est_tot_frames,desired_interval)):
             vidcap.set(cv2.CAP_PROP_POS_FRAMES, i)
             sucsses, frame = vidcap.read()
@@ -197,7 +197,7 @@ class Camera:
         frame_size: The size of the frame (Width, Hight)
         coded: The type of the video
         """
-        print(f'Creating vidoe for {self.name} save to {output_file}')
+        print(f'Creating video for {self.name} save to {output_file}')
         if os.path.exists(output_file):
             os.remove(output_file)
 

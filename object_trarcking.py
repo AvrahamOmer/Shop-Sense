@@ -29,10 +29,10 @@ if __name__ == "__main__":
     folder_out_front = "Track/Track-front"
     folder_out_store = "Track/Track-store"
     folder_outs = [folder_out_front,folder_out_store]
-    max_age, min_hits, iou_threshold = 1, 2, 0.3
-    duration = 5 # time in seconds
-    skip_detect = 5 # doing object detection every n frames
-    desired_interval = 3 # taking every n frames 
+    max_age, min_hits, iou_threshold = 2, 3, 0.3
+    duration = 25 # time in seconds
+    skip_detect = 5 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
+    desired_interval = 2 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
     obj = centernet.ObjectDetection(num_classes=80)
     obj.load_weights(weights_path=None)
