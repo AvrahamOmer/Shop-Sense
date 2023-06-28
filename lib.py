@@ -1,5 +1,5 @@
 from IPython.display import HTML, display
-import PIL.Image
+from PIL import Image, ImageDraw, ImageFont
 from base64 import b64encode
 import seaborn as sns
 import numpy as np
@@ -33,47 +33,6 @@ def match_ID(overlapping,detections):
             closest_id = id
     return closest_id
 
-def show_video(video_path, video_width = "fill"):
-  """
-  video_path (str): The path to the video
-  video_width: Width for the window the video will be shown in 
-  """
-  video_file = open(video_path, "r+b").read()
-
-  video_url = f"data:video/mp4;base64,{b64encode(video_file).decode()}"
-  html_content = f"""<video width={video_width} controls><source src="{video_url}"></video>"""
-  with open("index.html", "w") as file:
-        file.write(html_content)
-
-  print("index.html file created.")
-def create_video(frames_dir = 'Track', output_file = 'movie.mp4', framerate = 25, frame_size = (1280,720), codec = "mp4v"):
-  """
-  frames_dir (str): The folder that has the tracked frames
-  output_file (str): The file the video will be saved in 
-  framerate (float): The framerate for the video
-  frame_size: The size of the frame (Width, Hight)
-  coded: The type of the video
-  """
-  if os.path.exists(output_file):
-    os.remove(output_file)
-
-  frame_files = sorted(os.listdir(frames_dir))
-
-  # Create a VideoWriter object
-  output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*codec), framerate, frame_size)
-
-  # Iterate through the frames and write them to the video
-  for frame_file in frame_files:
-      frame_path = os.path.join(frames_dir, frame_file)
-      frame = cv2.imread(frame_path)
-      output_vid.write(frame)
-
-  # Release the VideoWriter object and close the video file
-  output_vid.release()
-
-
-  
-
 class VisTrack:
     def __init__(self, unique_colors=400):
         """
@@ -103,28 +62,31 @@ class VisTrack:
         ic = self._id_dict[i]
         return self._get_color(ic)
 
-    def draw_bounding_boxes(self, im: PIL.Image, bboxes: np.ndarray, ids: np.ndarray) -> PIL.Image:
+    def draw_bounding_boxes(self, im: Image, bboxes: np.ndarray, ids: np.ndarray) -> Image:
         """
-        im (PIL.Image): The image 
+        im (Image): The image 
         bboxes (np.ndarray): The bounding boxes. [[x1,y1,x2,y2],...]
         ids (np.ndarray): The id's for the bounding boxes
         scores (np.ndarray): The scores's for the bounding boxes
         """
         im = im.copy()
-        draw = PIL.ImageDraw.Draw(im)
+        draw = ImageDraw.Draw(im)
 
         for bbox, id_ in zip(bboxes, ids):
             color = self._color(id_)
             draw.rectangle((*bbox.astype(np.int64),), outline=color)
 
             text = f'{id_}'
-            text_w, text_h = draw.textsize(text)
+            #text_w, text_h = draw.textsize(text)
 
             #increase text size
-            font_size = 18
+            font_size = 32
+            font = ImageFont.truetype("Gidole-Regular.ttf", size=font_size)
 
-            draw.rectangle((bbox[0], bbox[1], bbox[0] + text_w, bbox[1] + text_h), fill=color, outline=color)
-            draw.text((bbox[0], bbox[1]), text, fill=(0, 0, 0), size=font_size)
+            position = (bbox[0], bbox[1])
+            bbox = draw.textbbox(position, text, font=font)
+            draw.rectangle(bbox, fill=color, outline=color)
+            draw.text(position, text, fill=(0, 0, 0), font=font)
 
         return im
 class Camera:
@@ -139,6 +101,7 @@ class Camera:
         fps = vidcap.get(cv2.CAP_PROP_FPS)
         est_tot_frames = int(duration * fps)
         frame_count = 0
+        print(f'creating res for {self.name}')
         for i in tqdm(range(0,est_tot_frames,desired_interval)):
             vidcap.set(cv2.CAP_PROP_POS_FRAMES, i)
             sucsses, frame = vidcap.read()
@@ -203,6 +166,58 @@ class Camera:
                     mapping_ids[id] = new_id
                 self.resDic[frame][index,-1] = mapping_ids[id]
         return mapping_ids
+    
+    def draw_bounding_boxes(self, duration, desired_interval, vt, folder_out):
+        '''
+        this function will take the updated res and draw of each frame the corresponding res
+        '''
+        vidcap = cv2.VideoCapture(self.vidoePath)
+        fps = vidcap.get(cv2.CAP_PROP_FPS)
+        est_tot_frames = int(duration * fps)
+        frame_count = 0
+        print(f'starting draw bounding boxes on {self.name} save it to {folder_out}')
+        for i in tqdm(range(0,est_tot_frames,desired_interval)):
+            vidcap.set(cv2.CAP_PROP_POS_FRAMES, i)
+            sucsses, frame = vidcap.read()
+            if not sucsses:
+                break
+            boxes_track = self.resDic[frame_count][:,:-1]
+            boces_ids = self.resDic[frame_count][:,-1].astype(int)
+
+            p_frame = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            if len(self.resDic[frame_count]) > 0:
+                p_frame = vt.draw_bounding_boxes(p_frame, boxes_track, boces_ids)
+            p_frame.save(os.path.join(folder_out, f"{frame_count:03d}.png"))
+            frame_count += 1
+
+    def create_vidoe(self, output_file, frames_dir, desired_interval,frame_size = (1280,720), codec = "mp4v"):
+        """
+        frames_dir (str): The folder that has the tracked frames
+        output_file (str): The file the video will be saved in 
+        frame_size: The size of the frame (Width, Hight)
+        coded: The type of the video
+        """
+        print(f'Creating vidoe for {self.name} save to {output_file}')
+        if os.path.exists(output_file):
+            os.remove(output_file)
+
+        frame_files = sorted(os.listdir(frames_dir))
+        vidcap = cv2.VideoCapture(self.vidoePath)
+        fps = vidcap.get(cv2.CAP_PROP_FPS)
+        framerate = fps // desired_interval
+
+        # Create a VideoWriter object
+        output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*codec), framerate, frame_size)
+
+        # Iterate through the frames and write them to the video
+        for frame_file in frame_files:
+            frame_path = os.path.join(frames_dir, frame_file)
+            frame = cv2.imread(frame_path)
+            output_vid.write(frame)
+
+        # Release the VideoWriter object and close the video file
+        output_vid.release()
+
     
 class CameraFront(Camera):
     def __init__(self, name, vidoePath, overlappingDic):
