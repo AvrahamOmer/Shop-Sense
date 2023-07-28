@@ -17,11 +17,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate ids for object tracking.')
     parser.add_argument('-g', '--generate-frames', action='store_true', default=False, help='Generate frames.')
     parser.add_argument('-c', '--create-videos', action='store_true', default=False, help='Create video.')
+    parser.add_argument('-m', '--calculate-metrics', action='store_true', default=False, help='calculate the avg of ious.')
     args = parser.parse_args()
     generate_frames = args.generate_frames
     create_videos = args.create_videos
+    calculate_avg_iou = args.calculate_metrics
     print("generate_frames:", generate_frames)
     print("create_video:", create_videos)
+    print("calcualte_avg_iou:", calculate_avg_iou)
 
     # config variables
     video_file_f = "./dataset/videos/front_2.mp4"
@@ -66,6 +69,11 @@ if __name__ == "__main__":
         vt = VisTrack()
         cameraF.draw_bounding_boxes(duration,desired_interval,vt,folder_out_front)
         cameraS.draw_bounding_boxes(duration,desired_interval,vt,folder_out_store)
+    
+    #calcualate iou avg
+    if calculate_avg_iou:
+        average = np.mean(sort.list_of_iou)
+        print("The avg of iou is:", average)
 
     #create a videos
     if create_videos:
