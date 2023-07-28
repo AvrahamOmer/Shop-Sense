@@ -156,8 +156,11 @@ def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
 
   Returns 4 values: matches, unmatched_detections, unmatched_trackers, and iou_list
   """
+
+  iou_list = []
+
   if(len(trackers)==0):
-    return np.empty((0,2),dtype=int), np.arange(len(detections)), np.empty((0,5),dtype=int)
+    return np.empty((0,2),dtype=int), np.arange(len(detections)), np.empty((0,5),dtype=int), iou_list
 
   iou_matrix = iou_batch(detections, trackers)
 
@@ -180,11 +183,9 @@ def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
       unmatched_trackers.append(t)
 
   # Collect IOU values greater than the threshold
-  iou_list = []
   for m in matched_indices:
       iou = iou_matrix[m[0], m[1]]
-      if iou >= iou_threshold:
-          iou_list.append(iou)
+      iou_list.append(iou)
 
   #filter out matched with low IOU
   matches = []
@@ -237,7 +238,7 @@ class Sort(object):
     for t in reversed(to_del):
       self.trackers.pop(t)
     matched, unmatched_dets, unmatched_trks, current_frame_iou_list = associate_detections_to_trackers(dets,trks, self.iou_threshold)
-
+    
     self.list_of_iou += current_frame_iou_list
 
     # update matched trackers with assigned detections
