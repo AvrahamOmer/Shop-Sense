@@ -33,12 +33,12 @@ if __name__ == "__main__":
     folder_out_store = "Track/Track-store"
     folder_outs = [folder_out_front,folder_out_store]
     max_age, min_hits, iou_threshold = 2, 3, 0.3
-    duration = 25 # time in seconds
+    duration = 12 # time in seconds
     skip_detect = 1 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
     desired_interval = 1 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
     obj = centernet.ObjectDetection(num_classes=80)
-    obj.load_weights(weights_path=None)
+    obj.load_weights(weights_path=None) # type: ignore
 
     cameraF = CameraFront(name='front', vidoePath=video_file_f, overlappingDic={'store': np.array([230,640,450,1080]),
                                                                            'door': np.array([440,630,510,990])})
