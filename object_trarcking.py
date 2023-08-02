@@ -11,6 +11,14 @@ import shutil
 from sort import Sort
 from lib import VisTrack, Camera, CameraFront
 
+def split_paths(path_string):
+    names = path_string.split(',')
+    front = names[0].strip()
+    store = names[1].strip()
+
+    return front, store
+
+
 if __name__ == "__main__":
 
     # Create the argument
@@ -18,22 +26,31 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--generate-frames', action='store_true', default=False, help='Generate frames.')
     parser.add_argument('-c', '--create-videos', action='store_true', default=False, help='Create video.')
     parser.add_argument('-m', '--calculate-metrics', action='store_true', default=False, help='calculate the avg of ious.')
+    parser.add_argument('-s', '--source', type=str, help='Path to the video source file')
+    parser.add_argument('-d', '--destination', type=str, help='Path to the video destination file')
+
+
     args = parser.parse_args()
     generate_frames = args.generate_frames
     create_videos = args.create_videos
     calculate_avg_iou = args.calculate_metrics
+    source = args.source
+    destination = args.destination
+    
     print("generate_frames:", generate_frames)
     print("create_video:", create_videos)
     print("calcualte_avg_iou:", calculate_avg_iou)
+    print("source:", source)
+    print("destination:", destination)
 
     # config variables
-    video_file_f = "./dataset/videos/front_2.mp4"
-    video_file_s = "./dataset/videos/store_2.mp4"
+    video_file_f, video_file_s = split_paths(source) if source is not None else ("./dataset/videos/front_2.mp4", "./dataset/videos/store_2.mp4")
+    output_file_f, output_file_s = split_paths(destination) if destination is not None else ("dataset/Track-front.mp4", "dataset/Track-store.mp4")
     folder_out_front = "Track/Track-front"
     folder_out_store = "Track/Track-store"
     folder_outs = [folder_out_front,folder_out_store]
     max_age, min_hits, iou_threshold = 2, 3, 0.3
-    duration = 12 # time in seconds
+    duration = 1 # time in seconds
     skip_detect = 1 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
     desired_interval = 1 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
@@ -77,5 +94,5 @@ if __name__ == "__main__":
 
     #create a videos
     if create_videos:
-        cameraF.create_vidoe(frames_dir=folder_out_front,output_file= "dataset/Track-front.mp4",frame_size= (608,1080),desired_interval=desired_interval)
-        cameraF.create_vidoe(frames_dir=folder_out_store,output_file= "dataset/Track-store.mp4",frame_size= (608,1080),desired_interval=desired_interval)
+        cameraF.create_vidoe(frames_dir=folder_out_front,output_file= output_file_f,frame_size= (608,1080),desired_interval=desired_interval)
+        cameraF.create_vidoe(frames_dir=folder_out_store,output_file= output_file_s,frame_size= (608,1080),desired_interval=desired_interval)
