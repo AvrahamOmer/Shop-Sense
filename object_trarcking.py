@@ -50,7 +50,7 @@ if __name__ == "__main__":
     folder_out_store = "Track/Track-store"
     folder_outs = [folder_out_front,folder_out_store]
     max_age, min_hits, iou_threshold = 2, 3, 0.3
-    duration = 1 # time in seconds
+    duration = 25 # time in seconds
     skip_detect = 1 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
     desired_interval = 1 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
