@@ -20,9 +20,7 @@ def split_paths(path_string):
 
     return front, store
 
-
-if __name__ == "__main__":
-
+def main ():
     # Create the argument
     parser = argparse.ArgumentParser(description='Generate ids for object tracking.')
     parser.add_argument('-g', '--generate-frames', action='store_true', default=False, help='Generate frames.')
@@ -52,7 +50,7 @@ if __name__ == "__main__":
     folder_out_store = "Track/Track-store"
     folder_outs = [folder_out_front,folder_out_store]
     max_age, min_hits, iou_threshold = 2, 3, 0.3
-    duration = 10 # time in seconds
+    duration = 5 # time in seconds
     skip_detect = 5 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
     desired_interval = 2 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
@@ -64,7 +62,7 @@ if __name__ == "__main__":
     
     cameraS = Camera(name='store', vidoePath=video_file_s, overlappingDic={'front': np.array([440,630,570,1080])})
     
-    if generate_frames:
+    if not generate_frames:
         cameraF.create_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
         cameraS.create_res(duration=duration, desired_interval=desired_interval, skip_detect=skip_detect,sort=sort,obj=obj)
 
@@ -103,9 +101,11 @@ if __name__ == "__main__":
         print("The avg of iou is:", average)
 
     #create a videos
-    if create_videos:
+    if not create_videos:
         cameraF.create_vidoe(frames_dir=folder_out_front,output_file= "dataset/Track-front.mp4",frame_size= (608,1080),desired_interval=desired_interval)
         cameraF.create_vidoe(frames_dir=folder_out_store,output_file= "dataset/Track-store.mp4",frame_size= (608,1080),desired_interval=desired_interval)
+
+    result = {}
 
     # print the duration time for each id
     print(f'The number of pepole in the store was {len(stay_durations_dic)}')
@@ -114,3 +114,15 @@ if __name__ == "__main__":
     for id, frames in stay_durations_dic.items():
         duration_in_sec = (len(frames) * desired_interval) / fps
         print (f'ID number {id} stay {duration_in_sec:.2f} seconds')
+        result[id] = f'{duration_in_sec:.2f}'
+
+    return result
+
+
+
+if __name__ == "__main__":
+    durations = main()
+    print(durations)
+
+
+   
