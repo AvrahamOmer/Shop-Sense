@@ -154,10 +154,13 @@ def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
   """
   Assigns detections to tracked object (both represented as bounding boxes)
 
-  Returns 3 lists of matches, unmatched_detections and unmatched_trackers
+  Returns 4 values: matches, unmatched_detections, unmatched_trackers, and iou_list
   """
+
+  iou_list = []
+
   if(len(trackers)==0):
-    return np.empty((0,2),dtype=int), np.arange(len(detections)), np.empty((0,5),dtype=int)
+    return np.empty((0,2),dtype=int), np.arange(len(detections)), np.empty((0,5),dtype=int), iou_list
 
   iou_matrix = iou_batch(detections, trackers)
 
@@ -179,6 +182,11 @@ def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
     if(t not in matched_indices[:,1]):
       unmatched_trackers.append(t)
 
+  # Collect IOU values greater than the threshold
+  for m in matched_indices:
+      iou = iou_matrix[m[0], m[1]]
+      iou_list.append(iou)
+
   #filter out matched with low IOU
   matches = []
   for m in matched_indices:
@@ -192,7 +200,7 @@ def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
   else:
     matches = np.concatenate(matches,axis=0)
 
-  return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
+  return matches, np.array(unmatched_detections), np.array(unmatched_trackers), iou_list
 
 
 class Sort(object):
@@ -205,6 +213,7 @@ class Sort(object):
     self.iou_threshold = iou_threshold
     self.trackers = []
     self.frame_count = 0
+    self.list_of_iou = []
 
   def update(self, dets=np.empty((0, 5))):
     """
@@ -228,7 +237,9 @@ class Sort(object):
     trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
     for t in reversed(to_del):
       self.trackers.pop(t)
-    matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets,trks, self.iou_threshold)
+    matched, unmatched_dets, unmatched_trks, current_frame_iou_list = associate_detections_to_trackers(dets,trks, self.iou_threshold)
+    
+    self.list_of_iou += current_frame_iou_list
 
     # update matched trackers with assigned detections
     for m in matched:
