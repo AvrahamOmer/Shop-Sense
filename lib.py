@@ -31,7 +31,7 @@ def match_ID(overlapping,detections):
         if distance < min_distance:
             min_distance = distance
             closest_id = id
-    return closest_id
+    return int(closest_id)
 
 class VisTrack:
     def __init__(self, unique_colors=400):
@@ -95,6 +95,7 @@ class Camera:
         self.vidoePath = vidoePath
         self.overlappingDic = overlappingDic
         self.resDic = {}
+        self.updated = {}
 
     def create_res(self,duration,desired_interval,skip_detect,sort : Sort, obj : ObjectDetection):
         vidcap = cv2.VideoCapture(self.vidoePath)
@@ -129,6 +130,7 @@ class Camera:
             dets = add_fifth_axis(boxes)
             res = sort.update(dets)
             self.resDic[frame_count] = res
+            self.updated[frame_count] = False
 
             frame_count += 1
     
@@ -160,11 +162,15 @@ class Camera:
                 id = int(res[-1])
                 if id not in mapping_ids:
                     prev_camera = self.detect_prev_camera(res)
-                    overlapping = camerasDic[prev_camera].overlappingDic[self.name]
-                    detections = camerasDic[prev_camera].resDic[frame]
+                    prev_camera_object = camerasDic[prev_camera]
+                    if not prev_camera_object.updated[frame]:
+                        mapping_ids = prev_camera_object.update_frame(frame= frame, camerasDic= camerasDic, mapping_ids= mapping_ids)
+                    overlapping = prev_camera_object.overlappingDic[self.name]
+                    detections = prev_camera_object.resDic[frame]
                     new_id = match_ID(overlapping,detections)
                     mapping_ids[id] = new_id
                 self.resDic[frame][index,-1] = mapping_ids[id]
+        self.updated[frame] = True
         return mapping_ids
     
     def draw_bounding_boxes(self, duration, desired_interval, vt, folder_out):
@@ -240,11 +246,14 @@ class CameraFront(Camera):
                         new_id = self.counterID
                         self.counterID += 1
                     else:
+                        if not camerasDic[prev_camera].updated[frame]:
+                            mapping_ids = camerasDic[prev_camera].update_frame(frame= frame, camerasDic= camerasDic, mapping_ids= mapping_ids)
                         overlapping = camerasDic[prev_camera].overlappingDic[self.name]
                         detections = camerasDic[prev_camera].resDic[frame]
                         new_id = match_ID(overlapping,detections)
                     mapping_ids[id] = new_id
                 self.resDic[frame][index,-1] = mapping_ids[id]
+        self.updated[frame] = True
         return mapping_ids
 
 

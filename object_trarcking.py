@@ -56,16 +56,18 @@ if __name__ == "__main__":
 
         stay_durations_dic = defaultdict(set)
 
+        max_resDic_length = max(len(camera.resDic) for camera in camerasDic.values())
+
         # update the cameras detections
-        for frame in range(len(cameraF.resDic)): # run on range (0,number of frames)
-            for spot,camera in camerasDic.items():
+        for frame in range(max_resDic_length): # run on range (0,number of frames)
+            for camera in camerasDic.values():
                 if frame in camera.resDic:
-                    mapping_ids = camera.update_frame(frame= frame, camerasDic= camerasDic, mapping_ids= mapping_ids)
-                    # add the frame to the stay duration dic 
-                    for index, res in enumerate(camera.resDic[frame]):
+                  if not camera.updated[frame]:
+                        mapping_ids = camera.update_frame(frame= frame, camerasDic= camerasDic, mapping_ids= mapping_ids)
+                  for index, res in enumerate(camera.resDic[frame]):
                         id = int(res[-1])
                         stay_durations_dic[id].add(frame)
-        
+
         # draw the res on frames
         for folder in folder_outs:
             if os.path.exists(folder):
