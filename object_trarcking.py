@@ -7,6 +7,8 @@ import PIL.Image
 import cv2
 from tqdm.auto import tqdm
 import shutil
+from collections import defaultdict
+
 
 from sort import Sort
 from lib import VisTrack, Camera, CameraFront
@@ -29,9 +31,9 @@ if __name__ == "__main__":
     folder_out_front = "Track/Track-front"
     folder_out_store = "Track/Track-store"
     folder_outs = [folder_out_front,folder_out_store]
-    max_age, min_hits, iou_threshold = 3, 3, 0.1
-    duration = 25 # time in seconds
-    skip_detect = 10 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
+    max_age, min_hits, iou_threshold = 2, 3, 0.3
+    duration = 10 # time in seconds
+    skip_detect = 5 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
     desired_interval = 2 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
     obj = centernet.ObjectDetection(num_classes=80)
@@ -52,14 +54,19 @@ if __name__ == "__main__":
             cameraS.name: cameraS
         }
 
+        stay_durations_dic = defaultdict(set)
+
         max_resDic_length = max(len(camera.resDic) for camera in camerasDic.values())
 
         # update the cameras detections
         for frame in range(max_resDic_length): # run on range (0,number of frames)
             for camera in camerasDic.values():
                 if frame in camera.resDic:
-                    if not camera.updated[frame]:
+                  if not camera.updated[frame]:
                         mapping_ids = camera.update_frame(frame= frame, camerasDic= camerasDic, mapping_ids= mapping_ids)
+                  for index, res in enumerate(camera.resDic[frame]):
+                        id = int(res[-1])
+                        stay_durations_dic[id].add(frame)
 
         # draw the res on frames
         for folder in folder_outs:
@@ -74,3 +81,11 @@ if __name__ == "__main__":
     if create_videos:
         cameraF.create_vidoe(frames_dir=folder_out_front,output_file= "dataset/Track-front.mp4",frame_size= (608,1080),desired_interval=desired_interval)
         cameraF.create_vidoe(frames_dir=folder_out_store,output_file= "dataset/Track-store.mp4",frame_size= (608,1080),desired_interval=desired_interval)
+
+    # print the duration time for each id
+        print(f'The number of pepole in the store was {len(stay_durations_dic)}')
+        vidcap = cv2.VideoCapture(cameraF.vidoePath) # need to figure how to save the fps to vidoe
+        fps = vidcap.get(cv2.CAP_PROP_FPS)
+        for id, frames in stay_durations_dic.items():
+            duration_in_sec = (len(frames) * desired_interval) / fps
+            print (f'ID number {id} stay {duration_in_sec:.2f} seconds')
