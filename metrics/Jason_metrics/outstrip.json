@@ -1,0 +1,21 @@
+{
+    "cameras": {
+        "front": {
+            "name": "Camera1",
+            "path": "./metrics/metrics_data_videos/front_1.mp4",
+            "overlapping":{
+                "door": [440,630,510,990],
+                "Camera2": [230,640,450,1080]
+            }
+        },
+        "store": [
+            {
+                "name": "Camera2",
+                "path": "./metrics/metrics_data_videos/store_1.mp4",
+                "overlapping":{
+                    "Camera1": [440,630,570,1080]
+                }
+            }
+        ]
+    }
+}
