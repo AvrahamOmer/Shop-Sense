@@ -1,11 +1,20 @@
-from flask import Flask, jsonify
-from object_trarcking import main as your_function
+from flask import Flask, jsonify , request
+from object_trarcking import main
+from lib import Camera, CameraFront
 
 app = Flask(__name__)
 
-@app.route('/api/get_data', methods=['GET'])
+@app.route('/api/get_data', methods=['POST'])
 def api_route():
-    result = your_function()  # Call your function
+    data = request.get_json()
+    cameras = data['cameras']
+    front = cameras['front']
+    store = cameras['store']
+    camerasDic = {}
+    camerasDic[front["name"]] = CameraFront(name=front["name"], vidoePath=front["path"], overlappingDic=front["overlapping"])
+    for camera in store:
+        camerasDic[camera["name"]] = Camera(name=camera["name"], vidoePath=camera["path"], overlappingDic=camera["overlapping"])
+    result = main(camerasDic) 
     return jsonify(result)
 
 if __name__ == '__main__':
