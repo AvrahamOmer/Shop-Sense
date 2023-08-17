@@ -96,6 +96,16 @@ class Camera:
         self.overlappingDic = overlappingDic
         self.resDic = {}
         self.updated = {}
+        self.setMetaData()
+    
+    def setMetaData(self):
+        vidcap = cv2.VideoCapture(self.vidoePath)
+        self.fps = vidcap.get(cv2.CAP_PROP_FPS)
+        self.duration = vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / self.fps
+        frame_width = int(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.frame_size = (frame_width, frame_height)
+
 
     def create_res(self,duration,desired_interval,skip_detect,sort : Sort, obj : ObjectDetection):
         vidcap = cv2.VideoCapture(self.vidoePath)
@@ -196,7 +206,7 @@ class Camera:
             p_frame.save(os.path.join(folder_out, f"{frame_count:03d}.png"))
             frame_count += 1
 
-    def create_vidoe(self, output_file, frames_dir, desired_interval,frame_size = (1280,720), codec = "mp4v"):
+    def create_vidoe(self, output_file, frames_dir, desired_interval, codec = "mp4v"):
         """
         frames_dir (str): The folder that has the tracked frames
         output_file (str): The file the video will be saved in 
@@ -208,12 +218,11 @@ class Camera:
             os.remove(output_file)
 
         frame_files = sorted(os.listdir(frames_dir))
-        vidcap = cv2.VideoCapture(self.vidoePath)
-        fps = vidcap.get(cv2.CAP_PROP_FPS)
+        fps = self.fps
         framerate = fps // desired_interval
 
         # Create a VideoWriter object
-        output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*codec), framerate, frame_size)
+        output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*codec), framerate, self.frame_size)
 
         # Iterate through the frames and write them to the video
         for frame_file in frame_files:
