@@ -15,7 +15,7 @@ from lib import VisTrack, Camera, CameraFront
 def main (camerasDic):
     # config variables
     max_age, min_hits, iou_threshold = 2, 3, 0.3
-    duration = 25 # time in seconds
+    duration = 3 # time in seconds
     skip_detect = 5 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
     desired_interval = 2 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
@@ -24,6 +24,7 @@ def main (camerasDic):
     mapping_ids = {}
     stay_durations_dic = defaultdict(set)
     result = {}
+    video_path = []
 
     # create the res for each camera
     for camera in camerasDic.values():
@@ -52,7 +53,9 @@ def main (camerasDic):
     
     #create a videos
     for camera in camerasDic.values():
-        camera.create_vidoe(frames_dir=f'Track/{camera.name}',output_file= f'dataset/marked/{camera.name}.mp4',desired_interval=desired_interval)
+        camera.create_video(frames_dir=f'Track/{camera.name}',output_file= f'dataset/marked/{camera.name}.mp4',desired_interval=desired_interval)
+        video_path.append(f'dataset/marked/{camera.name}.mp4')
+        
 
     #calcualate iou avg
     average = np.mean(sort.list_of_iou)
@@ -67,7 +70,7 @@ def main (camerasDic):
         print (f'ID number {id} stay {duration_in_sec:.2f} seconds')
         result[id] = f'{duration_in_sec:.2f}'
 
-    return result
+    return video_path
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate ids for object tracking.')

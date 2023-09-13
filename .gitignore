@@ -10,6 +10,10 @@ metrics/metrics_data_videos
 
 metrics/metrics_result_videos
 
+files.zip
+
+share/*
+
 __pycache__
 
 .DS_Store

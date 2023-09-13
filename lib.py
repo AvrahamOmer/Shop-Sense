@@ -8,6 +8,8 @@ import cv2
 from tqdm.auto import tqdm
 from sort import Sort
 from centernet import ObjectDetection
+from moviepy.editor import ImageSequenceClip
+
 
 def add_fifth_axis(array, default_value = 100):
     fifth_axis = np.full((array.shape[0], 1), default_value)
@@ -206,7 +208,7 @@ class Camera:
             p_frame.save(os.path.join(folder_out, f"{frame_count:03d}.png"))
             frame_count += 1
 
-    def create_vidoe(self, output_file, frames_dir, desired_interval, codec = "mp4v"):
+    def create_video(self, output_file, frames_dir, desired_interval):
         """
         frames_dir (str): The folder that has the tracked frames
         output_file (str): The file the video will be saved in 
@@ -217,21 +219,12 @@ class Camera:
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        frame_files = sorted(os.listdir(frames_dir))
+        os.environ["IMAGEIO_FFMPEG_EXE"] = "/opt/homebrew/bin/ffmpeg"
         fps = self.fps
         framerate = fps // desired_interval
-
-        # Create a VideoWriter object
-        output_vid = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*codec), framerate, self.frame_size)
-
-        # Iterate through the frames and write them to the video
-        for frame_file in frame_files:
-            frame_path = os.path.join(frames_dir, frame_file)
-            frame = cv2.imread(frame_path)
-            output_vid.write(frame)
-
-        # Release the VideoWriter object and close the video file
-        output_vid.release()
+        clip = ImageSequenceClip(frames_dir, fps=framerate)
+        clip.write_videofile(output_file)
+        clip.close()
 
     
 class CameraFront(Camera):
