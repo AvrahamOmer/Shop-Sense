@@ -2,7 +2,6 @@ import os
 import centernet
 import argparse
 import numpy as np
-import cv2
 import shutil
 from collections import defaultdict
 import json
@@ -15,7 +14,7 @@ from lib import VisTrack, Camera, CameraFront
 def main (camerasDic):
     # config variables
     max_age, min_hits, iou_threshold = 2, 3, 0.3
-    duration = 5 # time in seconds
+    duration = 25 # time in seconds
     skip_detect = 5 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
     desired_interval = 2 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
@@ -84,7 +83,10 @@ def main (camerasDic):
 
     total_customers = len(stay_durations_dic)
 
-    avg_time = time_counter/len(stay_durations_dic)
+    if total_customers == 0:
+        avg_time = 0
+    else:
+        avg_time = f'{time_counter/total_customers:.2f}s'
    
     return video_path, result, total_customers, avg_time, people_per_second
 

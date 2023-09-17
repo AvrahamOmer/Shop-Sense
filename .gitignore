@@ -12,7 +12,9 @@ metrics/metrics_result_videos
 
 files.zip
 
-share/*
+share
+
+final_results.json
 
 __pycache__
 
