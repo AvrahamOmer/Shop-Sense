@@ -2,7 +2,6 @@ import os
 import centernet
 import argparse
 import numpy as np
-import cv2
 import shutil
 from collections import defaultdict
 import json
@@ -15,7 +14,7 @@ from lib import VisTrack, Camera, CameraFront
 def main (camerasDic):
     # config variables
     max_age, min_hits, iou_threshold = 2, 3, 0.3
-    duration = 3 # time in seconds
+    duration = 25 # time in seconds
     skip_detect = 5 # doing object detection every n frames, to not skip on any frame: skip_detect = 1
     desired_interval = 2 # taking every n frames, to not skip on any frame: desired_interval = 1
     sort = Sort(max_age, min_hits, iou_threshold)
@@ -25,6 +24,12 @@ def main (camerasDic):
     stay_durations_dic = defaultdict(set)
     result = {}
     video_path = []
+    time_counter = 0
+    seconds_counter = 0
+    ids_per_second = defaultdict(set)
+    people_per_second = {}
+
+    
 
     # create the res for each camera
     for camera in camerasDic.values():
@@ -41,6 +46,11 @@ def main (camerasDic):
                 for index, res in enumerate(camera.resDic[frame]):
                     id = int(res[-1])
                     stay_durations_dic[id].add(frame)
+                    if frame % (camera.fps//desired_interval) == 0:
+                        ids_per_second[seconds_counter].add(id)
+        if frame % (camera.fps//desired_interval) == 0:
+            people_per_second[seconds_counter] = len(ids_per_second[seconds_counter])
+            seconds_counter += 1
 
     # draw the res on frames
     for folder in [name for name in camerasDic]:
@@ -62,15 +72,23 @@ def main (camerasDic):
     print("The avg of iou is:", average)
 
     # print the duration time for each id
-    print(f'The number of pepole in the store was {len(stay_durations_dic)}')
+    print(f'The number of people in the store was {len(stay_durations_dic)}')
     first_camera = next(iter(camerasDic.values()))
     fps = first_camera.fps
     for id, frames in stay_durations_dic.items():
         duration_in_sec = (len(frames) * desired_interval) / fps
-        print (f'ID number {id} stay {duration_in_sec:.2f} seconds')
+        time_counter += duration_in_sec
+        print (f'ID number {id} stayed {duration_in_sec:.2f} seconds')
         result[id] = f'{duration_in_sec:.2f}'
 
-    return video_path
+    total_customers = len(stay_durations_dic)
+
+    if total_customers == 0:
+        avg_time = 0
+    else:
+        avg_time = f'{time_counter/total_customers:.2f}s'
+   
+    return video_path, result, total_customers, avg_time, people_per_second
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate ids for object tracking.')

@@ -1,6 +1,4 @@
-from IPython.display import HTML, display
 from PIL import Image, ImageDraw, ImageFont
-from base64 import b64encode
 import seaborn as sns
 import numpy as np
 import os
